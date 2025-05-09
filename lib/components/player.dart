@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
+import 'package:pixel_adventure/components/collision_block.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 
 enum PlayerState {
   idle,running
 }
 
-enum PlayerDirection {left, right, none}
 
 class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelAdventure>, KeyboardHandler{
   String character;
@@ -18,37 +18,36 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelAd
   late final SpriteAnimation runningAnimation;
   final double stepTime = 0.05;
 
-  PlayerDirection playerDirection = PlayerDirection.none;
+  double horizontalMovement = 0;
   double moveSpeed = 100;
   Vector2 velocity = Vector2.zero();
-  bool isFacingRight = true;
+
+  List<CollisionBlock> collisionBlocks = [];
 
   @override
   FutureOr<void> onLoad() {
     _loadAllAnimations();
+    debugMode = true;
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
+    _updatePlayerState();
     _updatePlayerMovement(dt);
+    _checkHorizontalCollisions();
     super.update(dt);
   }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+
+    horizontalMovement = 0;
     final isLeftKeyPressed = keysPressed.contains(LogicalKeyboardKey.keyA) || keysPressed.contains(LogicalKeyboardKey.arrowLeft);
     final isRightKeyPressed = keysPressed.contains(LogicalKeyboardKey.keyD) || keysPressed.contains(LogicalKeyboardKey.arrowRight);
     
-    if(isLeftKeyPressed && isRightKeyPressed) {
-      playerDirection = PlayerDirection.none;
-    } else if (isLeftKeyPressed) {
-      playerDirection = PlayerDirection.left;
-    } else if (isRightKeyPressed) {
-      playerDirection = PlayerDirection.right;
-    } else {
-      playerDirection = PlayerDirection.none;
-    }
+    horizontalMovement += isLeftKeyPressed ? -1 : 0;
+    horizontalMovement += isRightKeyPressed ? 1 : 0;
     
     return super.onKeyEvent(event, keysPressed);
   }
@@ -81,30 +80,27 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelAd
   }
   
   void _updatePlayerMovement(double dt) {
-    double directionX = 0.0;
-    switch (playerDirection) {
-      case PlayerDirection.left:
-        if(isFacingRight) {
-          flipHorizontallyAroundCenter();
-          isFacingRight = false;
-        }
-        current = PlayerState.running;
-        directionX -= moveSpeed;
-        break;
-      case PlayerDirection.right:
-        if(!isFacingRight) {
-          flipHorizontallyAroundCenter();
-          isFacingRight = true;
-        }
-        current = PlayerState.running;
-        directionX += moveSpeed;
-        break;
-      case PlayerDirection.none:
-        current = PlayerState.idle;
-        break;
+    velocity.x = horizontalMovement * moveSpeed;
+    position.x += velocity.x * dt;
+  }
+  
+  void _updatePlayerState() {
+    PlayerState playerState = PlayerState.idle;
+
+    if(velocity.x < 0 && scale.x > 0) {
+      flipHorizontallyAroundCenter();
+    }else if(velocity.x > 0 && scale.x < 0) {
+      flipHorizontallyAroundCenter();
     }
 
-    velocity = Vector2(directionX, 0.0);
-    position += velocity * dt;
+    if(velocity.x != 0) playerState = PlayerState.running;
+
+    current = playerState;
+  }
+  
+  void _checkHorizontalCollisions() {
+    for(final block in collisionBlocks) {
+      
+    }
   }
 }

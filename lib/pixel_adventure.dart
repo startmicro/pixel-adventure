@@ -4,8 +4,8 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:pixel_adventure/actors/player.dart';
-import 'package:pixel_adventure/levels/level.dart';
+import 'package:pixel_adventure/components/player.dart';
+import 'package:pixel_adventure/components/level.dart';
 
 class PixelAdventure extends FlameGame with HasKeyboardHandlerComponents, DragCallbacks {
 
@@ -34,6 +34,12 @@ class PixelAdventure extends FlameGame with HasKeyboardHandlerComponents, DragCa
     
     return super.onLoad();
   }
+
+  @override
+  void update(double dt) {
+    updateJoystick();
+    super.update(dt);
+  }
   
   void addJoystick() {
     joystick = JoystickComponent(
@@ -45,8 +51,28 @@ class PixelAdventure extends FlameGame with HasKeyboardHandlerComponents, DragCa
         sprite: Sprite(images.fromCache('HUD/Joystick.png'),
         ),
       ),
-      margin: const EdgeInsets.only(left: 32, bottom: 32),
+      margin: const EdgeInsets.only(left: 20, bottom: 32),
+      priority: 10,
     );
     add(joystick);
+  }
+  
+  void updateJoystick() {
+    switch (joystick.direction) {
+      case JoystickDirection.left:
+      case JoystickDirection.upLeft:
+      case JoystickDirection.downLeft:
+        player.horizontalMovement = -1;
+        break;
+      case JoystickDirection.right:
+      case JoystickDirection.upRight:
+      case JoystickDirection.downRight:
+        player.horizontalMovement = 1;
+        break;
+      default:
+        player.horizontalMovement = 0;
+        break;
+
+    }
   }
 }

@@ -71,6 +71,7 @@ class PixelAdventure extends FlameGame
         break;
       default:
         player.horizontalMovement = 0;
+        player.hasJumped = false;
         break;
     }
   }

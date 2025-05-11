@@ -6,19 +6,22 @@ import 'package:pixel_adventure/components/collision_block.dart';
 import 'package:pixel_adventure/components/utils.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 
-enum PlayerState { idle, running }
+enum PlayerState { idle, running, jumping, falling }
 
 class Player extends SpriteAnimationGroupComponent
     with HasGameReference<PixelAdventure>, KeyboardHandler {
   String character;
   Player({super.position, this.character = 'Ninja Frog'});
 
-  late final SpriteAnimation idleAnimation;
-  late final SpriteAnimation runningAnimation;
   final double stepTime = 0.05;
 
+  late final SpriteAnimation idleAnimation;
+  late final SpriteAnimation runningAnimation;
+  late final SpriteAnimation jumpingAnimation;
+  late final SpriteAnimation fallingAnimation;
+
   final double _gravity = 9.8;
-  final double _jumpForce = 460;
+  final double _jumpForce = 260;
   final double _terminalVelocity = 300;
 
   double horizontalMovement = 0;
@@ -49,7 +52,7 @@ class Player extends SpriteAnimationGroupComponent
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    //horizontalMovement = 0;
+    horizontalMovement = 0;
     final isLeftKeyPressed =
         keysPressed.contains(LogicalKeyboardKey.keyA) ||
         keysPressed.contains(LogicalKeyboardKey.arrowLeft);
@@ -62,7 +65,6 @@ class Player extends SpriteAnimationGroupComponent
 
     hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
 
-  
     return super.onKeyEvent(event, keysPressed);
   }
 
@@ -70,11 +72,15 @@ class Player extends SpriteAnimationGroupComponent
     //  create animation
     idleAnimation = _spriteAnimation('Idle', 11);
     runningAnimation = _spriteAnimation('Run', 12);
+    jumpingAnimation = _spriteAnimation("Jump", 1);
+    fallingAnimation = _spriteAnimation("Fall", 1);
 
     //  list of all animation
     animations = {
       PlayerState.idle: idleAnimation,
       PlayerState.running: runningAnimation,
+      PlayerState.jumping: fallingAnimation,
+      PlayerState.falling: jumpingAnimation,
     };
 
     //  set curret animation
@@ -117,7 +123,14 @@ class Player extends SpriteAnimationGroupComponent
       flipHorizontallyAroundCenter();
     }
 
+    // Running animation
     if (velocity.x != 0) playerState = PlayerState.running;
+
+    //  falling animation
+    if (velocity.y > _gravity) playerState = PlayerState.falling;
+
+    //  jumping animation
+    if (velocity.y < 0) playerState = PlayerState.jumping;
 
     current = playerState;
   }
